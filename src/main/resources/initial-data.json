@@ -4,7 +4,7 @@
       "id": 1,
       "firstName": "John",
       "lastName": "Doe",
-      "isActive": true,
+      "active": true,
       "dateOfBirth": "1995-05-20",
       "address": "123 Main St, Anytown"
     }
@@ -14,7 +14,7 @@
       "id": 1,
       "firstName": "Jane",
       "lastName": "Smith",
-      "isActive": true,
+      "active": true,
       "specialization": {
         "id": 1,
         "trainingTypeName": "Cardio"
@@ -24,7 +24,7 @@
       "id": 2,
       "firstName": "Mike",
       "lastName": "Richards",
-      "isActive": true,
+      "active": true,
       "specialization": {
         "id": 2,
         "trainingTypeName": "Weightlifting"
