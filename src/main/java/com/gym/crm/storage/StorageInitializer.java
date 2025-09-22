@@ -53,8 +53,7 @@ public class StorageInitializer {
                         storage.getTrainerStorage().put(trainer.getId(), trainer);
                     }
                 }
-                LOGGER.info("Storage initialized successfully with {} trainee(s) and {} trainer(s).",
-                        storage.getTraineeStorage().size(), storage.getTrainerStorage().size());
+                LOGGER.info("Storage initialized successfully with {} trainee(s) and {} trainer(s).", storage.getTraineeStorage().size(), storage.getTrainerStorage().size());
             } else {
                 LOGGER.warn("Initial data file not found at '{}', starting with empty storage.", dataFile.getURI());
             }
