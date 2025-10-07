@@ -1,12 +1,16 @@
 package com.gym.crm.service;
 
+import com.gym.crm.dao.TraineeDAO;
+import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dao.TrainingDAO;
+import com.gym.crm.model.Trainee;
+import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,67 +26,75 @@ class TrainingServiceTest {
 
     @Mock
     private TrainingDAO trainingDAO;
+    @Mock
+    private TraineeDAO traineeDAO;
+    @Mock
+    private TrainerDAO trainerDAO;
 
+    @InjectMocks
     private TrainingService trainingService;
+
+    private Trainee testTrainee;
+    private Trainer testTrainer;
+    private TrainingType testTrainingType;
 
     @BeforeEach
     void setUp() {
-        trainingService = new TrainingService();
-        trainingService.setTrainingDAO(trainingDAO);
+        testTrainee = new Trainee();
+        testTrainee.setId(1L);
+        testTrainee.setUsername("test.trainee");
+
+        testTrainer = new Trainer();
+        testTrainer.setId(2L);
+        testTrainer.setUsername("test.trainer");
+
+        testTrainingType = new TrainingType();
+        testTrainingType.setId(1L);
+        testTrainingType.setTrainingTypeName("Yoga");
     }
 
     @Test
-    void createTraining_ShouldCreateAndSaveTraining() {
-        Long traineeId = 1L;
-        Long trainerId = 2L;
-        String trainingName = "Morning Cardio";
-        TrainingType trainingType = new TrainingType();
-        trainingType.setId(1L);
-        trainingType.setTrainingTypeName("Cardio");
-        LocalDate trainingDate = LocalDate.now();
-        int duration = 60;
+    void addTraining_ShouldSucceed_WhenTraineeAndTrainerExist() {
+        when(traineeDAO.findByUsername("test.trainee")).thenReturn(Optional.of(testTrainee));
+        when(trainerDAO.findByUsername("test.trainer")).thenReturn(Optional.of(testTrainer));
 
-        ArgumentCaptor<Training> trainingCaptor = ArgumentCaptor.forClass(Training.class);
-        when(trainingDAO.save(trainingCaptor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
+        Training result = trainingService.addTraining(
+                "test.trainee", "test.trainer", "Morning Yoga",
+                testTrainingType, LocalDate.now(), 60);
 
-        Training createdTraining = trainingService.createTraining(traineeId, trainerId, trainingName, trainingType, trainingDate, duration);
-
-        assertNotNull(createdTraining);
-        assertNotNull(createdTraining.getId()); 
-        assertEquals(traineeId, createdTraining.getTraineeId());
-        assertEquals(trainerId, createdTraining.getTrainerId());
-        assertEquals(trainingName, createdTraining.getTrainingName());
-        assertEquals("Cardio", createdTraining.getTrainingType().getTrainingTypeName());
-        assertEquals(trainingDate, createdTraining.getTrainingDate());
-        assertEquals(duration, createdTraining.getTrainingDuration());
+        assertNotNull(result);
+        assertEquals(testTrainee, result.getTrainee());
+        assertEquals(testTrainer, result.getTrainer());
+        assertEquals("Morning Yoga", result.getTrainingName());
 
         verify(trainingDAO, times(1)).save(any(Training.class));
     }
 
     @Test
-    void selectTraining_ShouldReturnTraining_WhenFound() {
-        Training mockTraining = new Training();
-        mockTraining.setId(1L);
-        mockTraining.setTrainingName("Test Training");
+    void addTraining_ShouldReturnNull_WhenTraineeNotFound() {
+        when(traineeDAO.findByUsername("unknown.trainee")).thenReturn(Optional.empty());
+        when(trainerDAO.findByUsername("test.trainer")).thenReturn(Optional.of(testTrainer)); 
 
-        when(trainingDAO.findById(1L)).thenReturn(Optional.of(mockTraining));
+        Training result = trainingService.addTraining(
+                "unknown.trainee", "test.trainer", "Morning Yoga",
+                testTrainingType, LocalDate.now(), 60);
 
-        Optional<Training> result = trainingService.selectTraining(1L);
+        assertNull(result);
 
-        assertTrue(result.isPresent());
-        assertEquals("Test Training", result.get().getTrainingName());
-
-        verify(trainingDAO, times(1)).findById(1L);
+        verify(trainingDAO, never()).save(any(Training.class));
     }
 
     @Test
-    void selectTraining_ShouldReturnEmpty_WhenNotFound() {
-        when(trainingDAO.findById(99L)).thenReturn(Optional.empty());
+    void addTraining_ShouldReturnNull_WhenTrainerNotFound() {
+        when(traineeDAO.findByUsername("test.trainee")).thenReturn(Optional.of(testTrainee)); 
+        when(trainerDAO.findByUsername("unknown.trainer")).thenReturn(Optional.empty());
 
-        Optional<Training> result = trainingService.selectTraining(99L);
+        Training result = trainingService.addTraining(
+                "test.trainee", "unknown.trainer", "Morning Yoga",
+                testTrainingType, LocalDate.now(), 60);
 
-        assertFalse(result.isPresent());
+        assertNull(result);
 
-        verify(trainingDAO, times(1)).findById(99L);
+        verify(trainingDAO, never()).save(any(Training.class));
     }
 }

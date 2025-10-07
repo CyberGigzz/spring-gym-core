@@ -1,47 +1,47 @@
 package com.gym.crm.service;
 
-import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
+@Transactional
 public class TrainerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TrainerService.class);
-    private final AtomicLong idCounter = new AtomicLong(1);
+    private final UserService userService;
+    private final TrainerDAO trainerDAO;
 
-    private TrainerDAO trainerDAO;
-    private TraineeDAO traineeDAO; 
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
-    public void setTrainerDAO(TrainerDAO trainerDAO) {
+    public TrainerService(UserService userService, TrainerDAO trainerDAO) {
+        this.userService = userService;
         this.trainerDAO = trainerDAO;
-    }
-
-    @Autowired
-    public void setTraineeDAO(TraineeDAO traineeDAO) {
-        this.traineeDAO = traineeDAO;
     }
 
     public Trainer createTrainerProfile(String firstName, String lastName, TrainingType specialization) {
         Trainer trainer = new Trainer();
-        trainer.setId(idCounter.getAndIncrement());
         trainer.setFirstName(firstName);
         trainer.setLastName(lastName);
         trainer.setSpecialization(specialization);
         trainer.setActive(true);
 
-        String username = generateUsername(firstName, lastName);
-        String password = generateRandomPassword();
+        String username = userService.generateUsername(firstName, lastName);
+        String password = userService.generateRandomPassword();
         trainer.setUsername(username);
         trainer.setPassword(password);
 
@@ -50,42 +50,69 @@ public class TrainerService {
         return trainer;
     }
 
-    public Optional<Trainer> selectTrainerProfile(Long id) {
-        LOGGER.info("Attempting to select trainer with ID: {}", id);
-        return trainerDAO.findById(id);
+    public boolean checkTrainerCredentials(String username, String password) {
+        Optional<Trainer> trainerOpt = trainerDAO.findByUsername(username);
+        return trainerOpt.map(trainer -> trainer.getPassword().equals(password)).orElse(false);
     }
 
-    public Trainer updateTrainerProfile(Trainer trainer) {
-        LOGGER.info("Updating trainer profile for user: {}", trainer.getUsername());
-        return trainerDAO.save(trainer);
+    public Optional<Trainer> selectTrainerProfileByUsername(String username) {
+        return trainerDAO.findByUsername(username);
     }
 
-    private String generateUsername(String firstName, String lastName) {
-        String baseUsername = firstName.toLowerCase() + "." + lastName.toLowerCase();
-        String finalUsername = baseUsername;
-        int serial = 1;
-        while (isUsernameTaken(finalUsername)) {
-            finalUsername = baseUsername + serial;
-            serial++;
+    public boolean changeTrainerPassword(String username, String oldPassword, String newPassword) {
+        if (!checkTrainerCredentials(username, oldPassword)) {
+            LOGGER.warn("Authentication failed for trainer: {}", username);
+            return false;
         }
-        return finalUsername;
-    }
-
-    private boolean isUsernameTaken(String username) {
-        boolean takenByTrainee = traineeDAO.findAll().stream()
-                .anyMatch(t -> t.getUsername().equalsIgnoreCase(username));
-        boolean takenByTrainer = trainerDAO.findAll().stream()
-                .anyMatch(t -> t.getUsername().equalsIgnoreCase(username));
-        return takenByTrainee || takenByTrainer;
-    }
-
-    private String generateRandomPassword() {
-        final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        SecureRandom random = new SecureRandom();
-        StringBuilder password = new StringBuilder(10);
-        for (int i = 0; i < 10; i++) {
-            password.append(CHARS.charAt(random.nextInt(CHARS.length())));
+        Optional<Trainer> trainerOpt = trainerDAO.findByUsername(username);
+        if (trainerOpt.isPresent()) {
+            Trainer trainer = trainerOpt.get();
+            trainer.setPassword(newPassword);
+            LOGGER.info("Password changed successfully for trainer: {}", username);
+            return true;
         }
-        return password.toString();
+        return false;
+    }
+
+    public Optional<Trainer> updateTrainerProfile(String username, String firstName, String lastName, TrainingType specialization, boolean isActive) {
+        Optional<Trainer> trainerOpt = trainerDAO.findByUsername(username);
+        if (trainerOpt.isPresent()) {
+            Trainer trainer = trainerOpt.get();
+            trainer.setFirstName(firstName);
+            trainer.setLastName(lastName);
+            trainer.setSpecialization(specialization);
+            trainer.setActive(isActive);
+            LOGGER.info("Trainer profile updated for: {}", username);
+            return Optional.of(trainer);
+        }
+        return Optional.empty();
+    }
+
+    public boolean activateDeactivateTrainer(String username, boolean isActive) {
+        Optional<Trainer> trainerOpt = trainerDAO.findByUsername(username);
+        if (trainerOpt.isPresent()) {
+            Trainer trainer = trainerOpt.get();
+            trainer.setActive(isActive);
+            LOGGER.info("Trainer {} status set to: {}", username, isActive ? "ACTIVE" : "INACTIVE");
+            return true;
+        }
+        return false;
+    }
+
+    public List<Object[]> getTrainerTrainingsList(String username, LocalDate fromDate, LocalDate toDate, String traineeName) {
+        String jpql = "SELECT t.trainingName, t.trainingDate, t.trainingType.trainingTypeName, te.username FROM Training t JOIN t.trainee te WHERE t.trainer.username = :username";
+
+        if (fromDate != null) jpql += " AND t.trainingDate >= :fromDate";
+        if (toDate != null) jpql += " AND t.trainingDate <= :toDate";
+        if (traineeName != null && !traineeName.isEmpty()) jpql += " AND te.firstName = :traineeName";
+
+        TypedQuery<Object[]> query = entityManager.createQuery(jpql, Object[].class);
+        query.setParameter("username", username);
+
+        if (fromDate != null) query.setParameter("fromDate", fromDate);
+        if (toDate != null) query.setParameter("toDate", toDate);
+        if (traineeName != null && !traineeName.isEmpty()) query.setParameter("traineeName", traineeName);
+
+        return query.getResultList();
     }
 }

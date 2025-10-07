@@ -1,37 +1,55 @@
 package com.gym.crm.dao;
 
 import com.gym.crm.model.Trainee;
-import com.gym.crm.storage.Storage;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository; 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public class TraineeDAO {
 
-    private Storage storage;
-
-    @Autowired
-    public void setStorage(Storage storage) {
-        this.storage = storage;
-    }
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public Trainee save(Trainee trainee) {
-        storage.getTraineeStorage().put(trainee.getId(), trainee);
-        return trainee;
+        if (trainee.getId() == null) {
+            entityManager.persist(trainee);
+            return trainee;
+        } else {
+            return entityManager.merge(trainee);
+        }
     }
 
     public Optional<Trainee> findById(Long id) {
-        return Optional.ofNullable(storage.getTraineeStorage().get(id));
+        Trainee trainee = entityManager.find(Trainee.class, id);
+        return Optional.ofNullable(trainee);
     }
 
-    public Collection<Trainee> findAll() {
-        return storage.getTraineeStorage().values();
+    public Optional<Trainee> findByUsername(String username) {
+        try {
+            Trainee trainee = entityManager.createQuery("SELECT t FROM Trainee t WHERE t.username = :username", Trainee.class)
+                    .setParameter("username", username)
+                    .getSingleResult();
+            return Optional.of(trainee);
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
     }
 
-    public void deleteById(Long id) {
-        storage.getTraineeStorage().remove(id);
+    public List<Trainee> findAll() {
+        return entityManager.createQuery("SELECT t FROM Trainee t", Trainee.class).getResultList();
+    }
+
+    public void delete(Trainee trainee) {
+        if (entityManager.contains(trainee)) {
+            entityManager.remove(trainee);
+        } else {
+            Trainee managedTrainee = entityManager.merge(trainee);
+            entityManager.remove(managedTrainee);
+        }
     }
 }

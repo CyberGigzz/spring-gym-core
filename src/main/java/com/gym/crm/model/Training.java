@@ -1,16 +1,37 @@
 package com.gym.crm.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDate;
 
+@Entity
+@Table(name = "trainings")
 public class Training {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long traineeId;
-    private Long trainerId;
-    private String trainingName;
+    
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "trainee_id", nullable = false)
+    private Trainee trainee;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "trainer_id", nullable = false)
+    private Trainer trainer;
+    
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "training_type_id", nullable = false)
     private TrainingType trainingType;
+
+    @Column(name = "training_name", nullable = false)
+    private String trainingName;
+    
+    @Column(name = "training_date", nullable = false)
     private LocalDate trainingDate;
-    private int trainingDuration;
+
+    @Column(name = "training_duration", nullable = false)
+    private int trainingDuration; 
+
 
     public Long getId() {
         return id;
@@ -20,20 +41,21 @@ public class Training {
         this.id = id;
     }
 
-    public Long getTraineeId() {
-        return traineeId;
+
+    public Trainee getTrainee() {
+        return trainee;
     }
 
-    public void setTraineeId(Long traineeId) {
-        this.traineeId = traineeId;
+    public void setTrainee(Trainee trainee) {
+        this.trainee = trainee;
     }
 
-    public Long getTrainerId() {
-        return trainerId;
+    public Trainer getTrainer() {
+        return trainer;
     }
 
-    public void setTrainerId(Long trainerId) {
-        this.trainerId = trainerId;
+    public void setTrainer(Trainer trainer) {
+        this.trainer = trainer;
     }
 
     public String getTrainingName() {
@@ -67,13 +89,14 @@ public class Training {
     public void setTrainingDuration(int trainingDuration) {
         this.trainingDuration = trainingDuration;
     }
+    
 
     @Override
     public String toString() {
         return "Training{" +
                 "id=" + id +
-                ", traineeId=" + traineeId +
-                ", trainerId=" + trainerId +
+                ", trainee=" + (trainee != null ? trainee.getId() : "null") + 
+                ", trainer=" + (trainer != null ? trainer.getId() : "null") + 
                 ", trainingName='" + trainingName + '\'' +
                 ", trainingType=" + trainingType +
                 ", trainingDate=" + trainingDate +

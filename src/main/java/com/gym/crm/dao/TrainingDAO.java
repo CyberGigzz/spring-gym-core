@@ -1,8 +1,8 @@
 package com.gym.crm.dao;
 
 import com.gym.crm.model.Training;
-import com.gym.crm.storage.Storage;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -10,19 +10,20 @@ import java.util.Optional;
 @Repository
 public class TrainingDAO {
 
-    private Storage storage;
-
-    @Autowired
-    public void setStorage(Storage storage) {
-        this.storage = storage;
-    }
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public Training save(Training training) {
-        storage.getTrainingStorage().put(training.getId(), training);
-        return training;
+        if (training.getId() == null) {
+            entityManager.persist(training);
+            return training;
+        } else {
+            return entityManager.merge(training);
+        }
     }
 
     public Optional<Training> findById(Long id) {
-        return Optional.ofNullable(storage.getTrainingStorage().get(id));
+        Training training = entityManager.find(Training.class, id);
+        return Optional.ofNullable(training);
     }
 }
