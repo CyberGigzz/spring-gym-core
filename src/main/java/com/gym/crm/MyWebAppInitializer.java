@@ -2,6 +2,8 @@ package com.gym.crm;
 
 import com.gym.crm.config.AppConfig;
 import com.gym.crm.config.WebConfig;
+
+import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 public class MyWebAppInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
@@ -17,6 +19,7 @@ public class MyWebAppInitializer extends AbstractAnnotationConfigDispatcherServl
     }
 
     @Override
+    @NonNull
     protected String[] getServletMappings() {
         return new String[]{"/"}; 
     }
