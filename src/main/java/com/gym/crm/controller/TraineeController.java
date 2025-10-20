@@ -30,6 +30,18 @@ public class TraineeController {
         this.traineeMapper = traineeMapper;
     }
 
+    @GetMapping
+    @Operation(summary = "Get a list of all trainees")
+    public ResponseEntity<List<TraineeProfileResponseDto>> getAllTrainees() {
+        List<Trainee> trainees = traineeService.findAllTrainees();
+        
+        List<TraineeProfileResponseDto> responseDtos = trainees.stream()
+                .map(traineeMapper::toTraineeProfileResponseDto)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(responseDtos);
+    }
+
     @PostMapping("/register")
     @Operation(summary = "Register a new trainee", description = "Creates a new trainee profile and returns their generated username and password.")
     public ResponseEntity<CredentialsDto> registerTrainee(@Valid @RequestBody TraineeRegistrationRequestDto requestDto) {

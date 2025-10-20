@@ -52,4 +52,6 @@ public class TraineeDAO {
             entityManager.remove(managedTrainee);
         }
     }
+
+    
 }

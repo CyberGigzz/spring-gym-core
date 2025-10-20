@@ -37,6 +37,11 @@ public class TraineeService {
         this.trainerDAO = trainerDAO;
     }
 
+    public List<Trainee> findAllTrainees() {
+        LOGGER.info("Fetching all trainees");
+        return traineeDAO.findAll();
+    }
+
     public Trainee createTraineeProfile(String firstName, String lastName, LocalDate dateOfBirth, String address) {
         Trainee trainee = new Trainee();
         trainee.setFirstName(firstName);
