@@ -2,8 +2,8 @@ package com.gym.crm;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
-
-
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
+import org.springframework.web.servlet.DispatcherServlet;
 import java.io.File;
 
 public class Main {
@@ -13,21 +13,30 @@ public class Main {
     public static void main(String[] args) throws Exception {
         Tomcat tomcat = new Tomcat();
         tomcat.setPort(PORT);
-        tomcat.getConnector();
+        tomcat.getConnector(); // Initializes the connector
 
-        File baseDir = new File(System.getProperty("java.io.tmpdir"));
-        Context context = tomcat.addWebapp("", baseDir.getAbsolutePath());
+        // 1. Define the application context for Tomcat
+        String contextPath = "/";
+        String docBase = new File(".").getAbsolutePath();
+        Context context = tomcat.addContext(contextPath, docBase);
 
-        System.out.println("Starting Tomcat server...");
+        // 2. Create the Spring Application Context
+        AnnotationConfigWebApplicationContext springContext = new AnnotationConfigWebApplicationContext();
+        // Register your Spring configuration class
+        springContext.register(com.gym.crm.config.WebConfig.class);
+
+        // 3. Create the Spring DispatcherServlet
+        DispatcherServlet dispatcherServlet = new DispatcherServlet(springContext);
+
+        // 4. Register the servlet with Tomcat
+        String servletName = "dispatcher";
+        Tomcat.addServlet(context, servletName, dispatcherServlet);
+        
+        // 5. Add the servlet mapping to handle all requests
+        context.addServletMappingDecoded("/", servletName);
+
+        System.out.println("Starting Tomcat server with Spring on port: " + PORT);
         tomcat.start();
-
-        System.out.println("====================================================================");
-        System.out.println("  Tomcat server started on port: " + PORT);
-        System.out.println("  Application URL: http://localhost:" + PORT);
-        System.out.println("  Swagger UI available at: http://localhost:" + PORT + "/swagger-ui.html");
-        System.out.println("  H2 Console available at: http://localhost:" + PORT + "/h2-console/");
-        System.out.println("====================================================================");
-
         tomcat.getServer().await();
     }
 }

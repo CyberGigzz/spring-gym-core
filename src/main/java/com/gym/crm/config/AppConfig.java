@@ -19,7 +19,6 @@ import java.util.Properties;
 @EnableTransactionManagement 
 public class AppConfig {
 
-
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
