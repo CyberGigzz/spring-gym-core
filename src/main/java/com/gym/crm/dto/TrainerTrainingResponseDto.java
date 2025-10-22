@@ -1,0 +1,15 @@
+package com.gym.crm.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import java.time.LocalDate;
+
+@Data
+@AllArgsConstructor
+public class TrainerTrainingResponseDto {
+    private String trainingName;
+    private LocalDate trainingDate;
+    private String trainingType;
+    private Integer trainingDuration;
+    private String traineeName; // The key difference from the other DTO
+}
