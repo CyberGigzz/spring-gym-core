@@ -23,7 +23,7 @@ public class LoginController {
         this.trainerService = trainerService;
     }
 
-    @GetMapping("/login")
+    @PostMapping("/login")
     @Operation(summary = "User login for Trainee or Trainer")
     public ResponseEntity<Void> login(@Valid @RequestBody LoginRequestDto loginRequest) {
         boolean traineeAuth = traineeService.checkTraineeCredentials(loginRequest.getUsername(), loginRequest.getPassword());

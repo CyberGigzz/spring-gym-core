@@ -122,7 +122,7 @@ public class TraineeService {
     }
 
     public List<Object[]> getTraineeTrainingsList(String username, LocalDate fromDate, LocalDate toDate, String trainerName, String trainingType) {
-        String jpql = "SELECT t.trainingName, t.trainingDate, t.trainingType.trainingTypeName, tr.username FROM Training t JOIN t.trainer tr WHERE t.trainee.username = :username";
+        String jpql = "SELECT t.trainingName, t.trainingDate, t.trainingType.trainingTypeName, t.trainingDuration, tr.username FROM Training t JOIN t.trainer tr WHERE t.trainee.username = :username";
 
         if (fromDate != null) jpql += " AND t.trainingDate >= :fromDate";
         if (toDate != null) jpql += " AND t.trainingDate <= :toDate";

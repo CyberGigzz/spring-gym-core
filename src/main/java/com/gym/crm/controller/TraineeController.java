@@ -81,7 +81,7 @@ public class TraineeController {
     }
 
     @GetMapping("/{username}/trainers/unassigned")
-    @Operation(summary = "Activate or deactivate a trainee")
+    @Operation(summary = "Get unassigned trainers for a trainee")
     public ResponseEntity<List<TrainerInfoDto>> getUnassignedTrainers(@PathVariable String username) {
         List<Trainer> trainers = traineeService.getUnassignedTrainersForTrainee(username);
         List<TrainerInfoDto> response = trainers.stream().map(t -> {
