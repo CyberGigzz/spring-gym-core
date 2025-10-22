@@ -16,14 +16,16 @@ import java.util.Properties;
 
 @Configuration
 @ComponentScan("com.gym.crm")
-@EnableTransactionManagement 
+@EnableTransactionManagement
 public class AppConfig {
 
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.Driver");
+        
         dataSource.setUrl("jdbc:h2:mem:gymdb;DB_CLOSE_DELAY=-1");
+        
         dataSource.setUsername("sa");
         dataSource.setPassword("");
         return dataSource;

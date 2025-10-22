@@ -14,9 +14,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ComponentScan;
 
 @Configuration
-@ComponentScan(basePackages = "org.springdoc") // Scan the springdoc library for its beans
+@ComponentScan(basePackages = "org.springdoc") 
 @Import({
-    // Manually import all the configuration classes springdoc needs
     SpringDocConfiguration.class,
     SpringDocWebMvcConfiguration.class,
     org.springdoc.webmvc.ui.SwaggerConfig.class,
@@ -26,5 +25,4 @@ import org.springframework.context.annotation.ComponentScan;
     JacksonAutoConfiguration.class 
 })
 public class SpringDocConfig {
-    // This class is just for configuration imports
 }
