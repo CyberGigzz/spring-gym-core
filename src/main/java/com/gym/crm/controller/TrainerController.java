@@ -1,11 +1,15 @@
 package com.gym.crm.controller;
 
-import com.gym.crm.dto.*;
+import com.gym.crm.dto.auth.CredentialsDto;
+import com.gym.crm.dto.trainer.TrainerProfileResponseDto;
+import com.gym.crm.dto.trainer.TrainerRegistrationRequestDto;
+import com.gym.crm.dto.trainer.TrainerTrainingResponseDto;
+import com.gym.crm.dto.trainer.UpdateTrainerProfileRequestDto;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.service.TrainerService;
-import com.gym.crm.service.TrainingTypeService; // We will need this
+import com.gym.crm.service.TrainingTypeService; 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

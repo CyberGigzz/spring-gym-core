@@ -1,16 +1,17 @@
-package com.gym.crm.dto;
+package com.gym.crm.dto.trainer;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import java.time.LocalDate;
 
 @Data
-public class UpdateTraineeProfileRequestDto {
+public class TrainerRegistrationRequestDto {
     @NotBlank(message = "First name is required")
     private String firstName;
+
     @NotBlank(message = "Last name is required")
     private String lastName;
-    private LocalDate dateOfBirth;
-    private String address;
-    private boolean isActive;
+
+    @NotNull(message = "Specialization ID is required")
+    private Long specializationId;
 }

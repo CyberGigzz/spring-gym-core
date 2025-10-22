@@ -1,4 +1,4 @@
-package com.gym.crm.dto;
+package com.gym.crm.dto.trainee;
 
 import java.time.LocalDate;
 import java.util.List;

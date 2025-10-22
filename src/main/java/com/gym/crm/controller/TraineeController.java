@@ -1,6 +1,12 @@
 package com.gym.crm.controller;
 
-import com.gym.crm.dto.*;
+import com.gym.crm.dto.auth.CredentialsDto;
+import com.gym.crm.dto.trainee.TraineeProfileResponseDto;
+import com.gym.crm.dto.trainee.TraineeRegistrationRequestDto;
+import com.gym.crm.dto.trainee.TraineeTrainingResponseDto;
+import com.gym.crm.dto.trainee.TrainerInfoDto;
+import com.gym.crm.dto.trainee.UpdateTraineeProfileRequestDto;
+import com.gym.crm.dto.trainee.UpdateTraineeTrainersRequestDto;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;

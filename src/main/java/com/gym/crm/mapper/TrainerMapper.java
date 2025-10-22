@@ -1,7 +1,7 @@
 package com.gym.crm.mapper;
 
-import com.gym.crm.dto.TraineeInfoDto;
-import com.gym.crm.dto.TrainerProfileResponseDto;
+import com.gym.crm.dto.trainer.TraineeInfoDto;
+import com.gym.crm.dto.trainer.TrainerProfileResponseDto;
 import com.gym.crm.model.Trainer;
 import org.springframework.stereotype.Component;
 

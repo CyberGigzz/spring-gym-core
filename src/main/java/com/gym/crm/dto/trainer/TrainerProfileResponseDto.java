@@ -1,4 +1,4 @@
-package com.gym.crm.dto;
+package com.gym.crm.dto.trainer;
 
 import lombok.Data;
 import java.util.List;

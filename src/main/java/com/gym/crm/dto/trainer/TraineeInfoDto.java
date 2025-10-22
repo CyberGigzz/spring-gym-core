@@ -1,11 +1,10 @@
-package com.gym.crm.dto;
+package com.gym.crm.dto.trainer;
 
 import lombok.Data;
 
 @Data
-public class TrainerInfoDto {
+public class TraineeInfoDto {
     private String username;
     private String firstName;
     private String lastName;
-    private String specialization;
 }
