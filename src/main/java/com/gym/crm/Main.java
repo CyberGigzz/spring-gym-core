@@ -34,7 +34,6 @@ public class Main {
         Tomcat.addServlet(context, h2ServletName, h2Servlet);
         context.addServletMappingDecoded("/h2-console/*", h2ServletName);
 
-
         System.out.println("Starting Tomcat server with Spring on port: " + PORT);
         tomcat.start();
         tomcat.getServer().await();
