@@ -2,6 +2,7 @@ package com.gym.crm.service;
 
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
+import com.gym.crm.dto.auth.CredentialsDto; // Import DTO
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import jakarta.persistence.EntityManager;
@@ -9,7 +10,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-// import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder; // <-- Import
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,26 +24,29 @@ import java.util.stream.Collectors;
 public class TraineeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TraineeService.class);
-    private final UserService userService; 
-    private TraineeDAO traineeDAO;
-    private TrainerDAO trainerDAO;
+    private final UserService userService;
+    private final TraineeDAO traineeDAO;
+    private final TrainerDAO trainerDAO;
+    private final PasswordEncoder passwordEncoder; // <-- Add field
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    // @Autowired
-    public TraineeService(UserService userService, TraineeDAO traineeDAO, TrainerDAO trainerDAO) {
+    public TraineeService(UserService userService, TraineeDAO traineeDAO, TrainerDAO trainerDAO, PasswordEncoder passwordEncoder) { // <-- Inject here
         this.userService = userService;
         this.traineeDAO = traineeDAO;
         this.trainerDAO = trainerDAO;
+        this.passwordEncoder = passwordEncoder; // <-- Assign
     }
 
+    @Transactional(readOnly = true) // Make reads explicit
     public List<Trainee> findAllTrainees() {
         LOGGER.info("Fetching all trainees");
         return traineeDAO.findAll();
     }
 
-    public Trainee createTraineeProfile(String firstName, String lastName, LocalDate dateOfBirth, String address) {
+    // Return CredentialsDto instead of Trainee
+    public CredentialsDto createTraineeProfile(String firstName, String lastName, LocalDate dateOfBirth, String address) {
         Trainee trainee = new Trainee();
         trainee.setFirstName(firstName);
         trainee.setLastName(lastName);
@@ -51,37 +55,52 @@ public class TraineeService {
         trainee.setActive(true);
 
         String username = userService.generateUsername(firstName, lastName);
-        String password = userService.generateRandomPassword();
+        String plainPassword = userService.generatePlainPassword(); // Generate plain password
+        String encodedPassword = userService.encodePassword(plainPassword); // Encode it
+
         trainee.setUsername(username);
-        trainee.setPassword(password);
+        trainee.setPassword(encodedPassword); // Store the encoded password
 
         traineeDAO.save(trainee);
         LOGGER.info("Successfully created trainee with username: {}", username);
-        return trainee;
+
+        // Return DTO with plain password
+        CredentialsDto credentials = new CredentialsDto();
+        credentials.setUsername(username);
+        credentials.setPassword(plainPassword); // Return the plain one
+        return credentials;
     }
 
-    public boolean checkTraineeCredentials(String username, String password) {
+    @Transactional(readOnly = true) // Add readOnly
+    public boolean checkTraineeCredentials(String username, String plainPassword) {
         Optional<Trainee> traineeOpt = traineeDAO.findByUsername(username);
-        return traineeOpt.map(trainee -> trainee.getPassword().equals(password)).orElse(false);
+        // Use matches() to compare plain text input with stored hash
+        return traineeOpt.map(trainee -> passwordEncoder.matches(plainPassword, trainee.getPassword()))
+                .orElse(false);
     }
 
+    @Transactional(readOnly = true) // Add readOnly
     public Optional<Trainee> selectTraineeProfileByUsername(String username) {
         return traineeDAO.findByUsername(username);
     }
 
     public boolean changeTraineePassword(String username, String oldPassword, String newPassword) {
-        if (!checkTraineeCredentials(username, oldPassword)) {
-            LOGGER.warn("Authentication failed for trainee: {}", username);
-            return false;
-        }
         Optional<Trainee> traineeOpt = traineeDAO.findByUsername(username);
         if (traineeOpt.isPresent()) {
             Trainee trainee = traineeOpt.get();
-            trainee.setPassword(newPassword);
-            traineeDAO.save(trainee); 
-            LOGGER.info("Password changed successfully for trainee: {}", username);
-            return true;
+            // Check old password using matches()
+            if (passwordEncoder.matches(oldPassword, trainee.getPassword())) {
+                // Encode the new password before setting
+                trainee.setPassword(passwordEncoder.encode(newPassword));
+                // No need to call save due to dirty checking
+                LOGGER.info("Password changed successfully for trainee: {}", username);
+                return true;
+            } else {
+                LOGGER.warn("Authentication failed for trainee (incorrect old password): {}", username);
+                return false;
+            }
         }
+        LOGGER.warn("Trainee not found for password change: {}", username);
         return false;
     }
 
@@ -94,9 +113,11 @@ public class TraineeService {
             trainee.setDateOfBirth(dateOfBirth);
             trainee.setAddress(address);
             trainee.setActive(isActive);
+            // No need to call save due to dirty checking
             LOGGER.info("Trainee profile updated for: {}", username);
             return Optional.of(trainee);
         }
+        LOGGER.warn("Trainee not found for profile update: {}", username);
         return Optional.empty();
     }
 
@@ -105,9 +126,11 @@ public class TraineeService {
         if (traineeOpt.isPresent()) {
             Trainee trainee = traineeOpt.get();
             trainee.setActive(isActive);
+            // No need to call save due to dirty checking
             LOGGER.info("Trainee {} status set to: {}", username, isActive ? "ACTIVE" : "INACTIVE");
             return true;
         }
+        LOGGER.warn("Trainee not found for status change: {}", username);
         return false;
     }
 
@@ -118,15 +141,19 @@ public class TraineeService {
             LOGGER.info("Trainee profile deleted for: {}", username);
             return true;
         }
+        LOGGER.warn("Trainee not found for deletion: {}", username);
         return false;
     }
 
+    @Transactional(readOnly = true) // Add readOnly
     public List<Object[]> getTraineeTrainingsList(String username, LocalDate fromDate, LocalDate toDate, String trainerName, String trainingType) {
+        // Ensure query is correct (added trainingDuration)
         String jpql = "SELECT t.trainingName, t.trainingDate, t.trainingType.trainingTypeName, t.trainingDuration, tr.username FROM Training t JOIN t.trainer tr WHERE t.trainee.username = :username";
 
         if (fromDate != null) jpql += " AND t.trainingDate >= :fromDate";
         if (toDate != null) jpql += " AND t.trainingDate <= :toDate";
-        if (trainerName != null && !trainerName.isEmpty()) jpql += " AND tr.firstName = :trainerName"; 
+        // Corrected parameter name for trainer name filtering
+        if (trainerName != null && !trainerName.isEmpty()) jpql += " AND (tr.firstName = :trainerName OR tr.lastName = :trainerName)";
         if (trainingType != null && !trainingType.isEmpty()) jpql += " AND t.trainingType.trainingTypeName = :trainingType";
 
         TypedQuery<Object[]> query = entityManager.createQuery(jpql, Object[].class);
@@ -140,32 +167,47 @@ public class TraineeService {
         return query.getResultList();
     }
 
+    @Transactional(readOnly = true) // Add readOnly
     public List<Trainer> getUnassignedTrainersForTrainee(String traineeUsername) {
-        return traineeDAO.findByUsername(traineeUsername)
-                .map(trainee -> {
-                    List<Long> assignedTrainerIds = trainee.getTrainers().stream().map(Trainer::getId).collect(Collectors.toList());
-                    if (assignedTrainerIds.isEmpty()) {
-                        return trainerDAO.findAll();
-                    }
-                    return entityManager.createQuery("SELECT t FROM Trainer t WHERE t.id NOT IN :assignedTrainerIds", Trainer.class)
-                            .setParameter("assignedTrainerIds", assignedTrainerIds)
-                            .getResultList();
-                })
-                .orElse(List.of());
+        Optional<Trainee> traineeOpt = traineeDAO.findByUsername(traineeUsername);
+        if (traineeOpt.isEmpty()) {
+            LOGGER.warn("Trainee not found for getting unassigned trainers: {}", traineeUsername);
+            return List.of();
+        }
+        Trainee trainee = traineeOpt.get();
+        List<Long> assignedTrainerIds = trainee.getTrainers().stream().map(Trainer::getId).collect(Collectors.toList());
+        if (assignedTrainerIds.isEmpty()) {
+            return trainerDAO.findAll(); // Return all trainers if none are assigned yet
+        }
+        // Fetch only active trainers who are not already assigned
+        return entityManager.createQuery("SELECT t FROM Trainer t WHERE t.isActive = true AND t.id NOT IN :assignedTrainerIds", Trainer.class)
+                .setParameter("assignedTrainerIds", assignedTrainerIds)
+                .getResultList();
     }
+
 
     public Optional<List<Trainer>> updateTraineeTrainersList(String username, List<String> trainerUsernames) {
         Optional<Trainee> traineeOpt = traineeDAO.findByUsername(username);
         if (traineeOpt.isPresent()) {
             Trainee trainee = traineeOpt.get();
-            List<Trainer> trainers = entityManager.createQuery("SELECT t FROM Trainer t WHERE t.username IN :usernames", Trainer.class)
+            // Fetch only active trainers matching the usernames
+            List<Trainer> trainers = entityManager.createQuery("SELECT t FROM Trainer t WHERE t.isActive = true AND t.username IN :usernames", Trainer.class)
                     .setParameter("usernames", trainerUsernames)
                     .getResultList();
-            
+
+            // Check if all requested trainers were found and active
+            if (trainers.size() != trainerUsernames.size()) {
+                 LOGGER.warn("Could not find all active trainers for usernames: {}", trainerUsernames);
+                 // Decide how to handle this - throw exception or just update with found ones?
+                 // For now, update with the ones found:
+            }
+
             trainee.setTrainers(trainers);
+            // No need to call save due to dirty checking
             LOGGER.info("Updated trainer list for trainee: {}", username);
             return Optional.of(trainee.getTrainers());
         }
+        LOGGER.warn("Trainee not found for trainer list update: {}", username);
         return Optional.empty();
     }
 }

@@ -1,6 +1,7 @@
 package com.gym.crm.service;
 
 import com.gym.crm.dao.TrainerDAO;
+import com.gym.crm.dto.auth.CredentialsDto; // Import DTO
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import jakarta.persistence.EntityManager;
@@ -8,7 +9,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-// import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder; // <-- Import
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,17 +24,19 @@ public class TrainerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrainerService.class);
     private final UserService userService;
     private final TrainerDAO trainerDAO;
+    private final PasswordEncoder passwordEncoder; // <-- Add field
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    // @Autowired
-    public TrainerService(UserService userService, TrainerDAO trainerDAO) {
+    public TrainerService(UserService userService, TrainerDAO trainerDAO, PasswordEncoder passwordEncoder) { // <-- Inject here
         this.userService = userService;
         this.trainerDAO = trainerDAO;
+        this.passwordEncoder = passwordEncoder; // <-- Assign
     }
 
-    public Trainer createTrainerProfile(String firstName, String lastName, TrainingType specialization) {
+    // Return CredentialsDto instead of Trainer
+    public CredentialsDto createTrainerProfile(String firstName, String lastName, TrainingType specialization) {
         Trainer trainer = new Trainer();
         trainer.setFirstName(firstName);
         trainer.setLastName(lastName);
@@ -41,36 +44,52 @@ public class TrainerService {
         trainer.setActive(true);
 
         String username = userService.generateUsername(firstName, lastName);
-        String password = userService.generateRandomPassword();
+        String plainPassword = userService.generatePlainPassword(); // Generate plain password
+        String encodedPassword = userService.encodePassword(plainPassword); // Encode it
+
         trainer.setUsername(username);
-        trainer.setPassword(password);
+        trainer.setPassword(encodedPassword); // Store encoded password
 
         trainerDAO.save(trainer);
         LOGGER.info("Successfully created trainer with username: {}", username);
-        return trainer;
+
+        // Return DTO with plain password
+        CredentialsDto credentials = new CredentialsDto();
+        credentials.setUsername(username);
+        credentials.setPassword(plainPassword); // Return plain one
+        return credentials;
     }
 
-    public boolean checkTrainerCredentials(String username, String password) {
+    @Transactional(readOnly = true) // Add readOnly
+    public boolean checkTrainerCredentials(String username, String plainPassword) {
         Optional<Trainer> trainerOpt = trainerDAO.findByUsername(username);
-        return trainerOpt.map(trainer -> trainer.getPassword().equals(password)).orElse(false);
+        // Use matches()
+        return trainerOpt.map(trainer -> passwordEncoder.matches(plainPassword, trainer.getPassword()))
+                .orElse(false);
     }
 
+    @Transactional(readOnly = true) // Add readOnly
     public Optional<Trainer> selectTrainerProfileByUsername(String username) {
         return trainerDAO.findByUsername(username);
     }
 
     public boolean changeTrainerPassword(String username, String oldPassword, String newPassword) {
-        if (!checkTrainerCredentials(username, oldPassword)) {
-            LOGGER.warn("Authentication failed for trainer: {}", username);
-            return false;
-        }
         Optional<Trainer> trainerOpt = trainerDAO.findByUsername(username);
         if (trainerOpt.isPresent()) {
             Trainer trainer = trainerOpt.get();
-            trainer.setPassword(newPassword);
-            LOGGER.info("Password changed successfully for trainer: {}", username);
-            return true;
+            // Check old password using matches()
+            if (passwordEncoder.matches(oldPassword, trainer.getPassword())) {
+                // Encode the new password
+                trainer.setPassword(passwordEncoder.encode(newPassword));
+                // No need to call save
+                LOGGER.info("Password changed successfully for trainer: {}", username);
+                return true;
+            } else {
+                LOGGER.warn("Authentication failed for trainer (incorrect old password): {}", username);
+                return false;
+            }
         }
+        LOGGER.warn("Trainer not found for password change: {}", username);
         return false;
     }
 
@@ -80,11 +99,13 @@ public class TrainerService {
             Trainer trainer = trainerOpt.get();
             trainer.setFirstName(firstName);
             trainer.setLastName(lastName);
-            trainer.setSpecialization(specialization);
+            trainer.setSpecialization(specialization); // Assuming specialization can be updated
             trainer.setActive(isActive);
+            // No need to call save
             LOGGER.info("Trainer profile updated for: {}", username);
             return Optional.of(trainer);
         }
+        LOGGER.warn("Trainer not found for profile update: {}", username);
         return Optional.empty();
     }
 
@@ -93,18 +114,23 @@ public class TrainerService {
         if (trainerOpt.isPresent()) {
             Trainer trainer = trainerOpt.get();
             trainer.setActive(isActive);
+            // No need to call save
             LOGGER.info("Trainer {} status set to: {}", username, isActive ? "ACTIVE" : "INACTIVE");
             return true;
         }
+        LOGGER.warn("Trainer not found for status change: {}", username);
         return false;
     }
 
+    @Transactional(readOnly = true) // Add readOnly
     public List<Object[]> getTrainerTrainingsList(String username, LocalDate fromDate, LocalDate toDate, String traineeName) {
-        String jpql = "SELECT t.trainingName, t.trainingDate, t.trainingType.trainingTypeName, te.username FROM Training t JOIN t.trainee te WHERE t.trainer.username = :username";
+        // Ensure query selects duration
+        String jpql = "SELECT t.trainingName, t.trainingDate, t.trainingType.trainingTypeName, t.trainingDuration, te.username FROM Training t JOIN t.trainee te WHERE t.trainer.username = :username";
 
         if (fromDate != null) jpql += " AND t.trainingDate >= :fromDate";
         if (toDate != null) jpql += " AND t.trainingDate <= :toDate";
-        if (traineeName != null && !traineeName.isEmpty()) jpql += " AND te.firstName = :traineeName";
+        // Corrected parameter name for trainee name filtering
+        if (traineeName != null && !traineeName.isEmpty()) jpql += " AND (te.firstName = :traineeName OR te.lastName = :traineeName)";
 
         TypedQuery<Object[]> query = entityManager.createQuery(jpql, Object[].class);
         query.setParameter("username", username);
