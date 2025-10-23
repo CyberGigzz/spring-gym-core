@@ -7,6 +7,7 @@ import org.springframework.web.servlet.DispatcherServlet;
 import java.io.File;
 import org.h2.server.web.JakartaWebServlet;
 
+
 public class Main {
 
     private static final int PORT = 8080;
@@ -32,6 +33,7 @@ public class Main {
         JakartaWebServlet h2Servlet = new JakartaWebServlet();
         Tomcat.addServlet(context, h2ServletName, h2Servlet);
         context.addServletMappingDecoded("/h2-console/*", h2ServletName);
+
 
         System.out.println("Starting Tomcat server with Spring on port: " + PORT);
         tomcat.start();

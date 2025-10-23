@@ -14,6 +14,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
     SpringDocConfig.class, 
     AppConfig.class, 
     OpenApiConfig.class,
+    FilterConfig.class
 }) 
 public class WebConfig implements WebMvcConfigurer {
 
