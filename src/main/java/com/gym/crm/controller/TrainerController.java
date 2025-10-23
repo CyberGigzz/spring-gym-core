@@ -5,6 +5,7 @@ import com.gym.crm.dto.trainer.TrainerProfileResponseDto;
 import com.gym.crm.dto.trainer.TrainerRegistrationRequestDto;
 import com.gym.crm.dto.trainer.TrainerTrainingResponseDto;
 import com.gym.crm.dto.trainer.UpdateTrainerProfileRequestDto;
+import com.gym.crm.exception.EntityNotFoundException;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 public class TrainerController {
 
     private final TrainerService trainerService;
-    private final TrainingTypeService trainingTypeService; // For Task 2
+    private final TrainingTypeService trainingTypeService; 
     private final TrainerMapper trainerMapper;
 
     public TrainerController(TrainerService trainerService, 
@@ -43,9 +44,8 @@ public class TrainerController {
     @Operation(summary = "Register a new trainer (Task 2)")
     public ResponseEntity<CredentialsDto> registerTrainer(@Valid @RequestBody TrainerRegistrationRequestDto requestDto) {
         
-        // We need to fetch the TrainingType entity from the ID
         TrainingType specialization = trainingTypeService.findById(requestDto.getSpecializationId())
-                .orElseThrow(() -> new RuntimeException("TrainingType not found")); // We'll fix this with GlobalExceptionHandler
+                .orElseThrow(() -> new EntityNotFoundException("TrainingType not found")); 
 
         Trainer newTrainer = trainerService.createTrainerProfile(
                 requestDto.getFirstName(), requestDto.getLastName(), specialization);
@@ -71,9 +71,8 @@ public class TrainerController {
     public ResponseEntity<TrainerProfileResponseDto> updateTrainerProfile(
             @PathVariable String username, @Valid @RequestBody UpdateTrainerProfileRequestDto requestDto) {
         
-        // Task 9 says specialization is read-only, so we get the existing one
         Trainer existingTrainer = trainerService.selectTrainerProfileByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Trainer not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found"));
 
         return trainerService.updateTrainerProfile(username, requestDto.getFirstName(), requestDto.getLastName(),
                         existingTrainer.getSpecialization(), requestDto.isActive())
@@ -92,9 +91,8 @@ public class TrainerController {
 
         List<Object[]> results = trainerService.getTrainerTrainingsList(username, fromDate, toDate, traineeName);
         
-        // This mapping matches the new DTO
         List<TrainerTrainingResponseDto> response = results.stream()
-                .map(r -> new TrainerTrainingResponseDto((String)r[0], (LocalDate)r[1], (String)r[2], null, (String)r[3])) // We need to fix the service query
+                .map(r -> new TrainerTrainingResponseDto((String)r[0], (LocalDate)r[1], (String)r[2], null, (String)r[3])) 
                 .collect(Collectors.toList());
         
         return ResponseEntity.ok(response);

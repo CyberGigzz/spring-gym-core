@@ -2,6 +2,7 @@ package com.gym.crm.controller;
 
 import com.gym.crm.dto.auth.LoginRequestDto;
 import com.gym.crm.dto.auth.UpdatePasswordRequestDto;
+import com.gym.crm.exception.AuthenticationFailedException;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +33,7 @@ public class LoginController {
         if (traineeAuth || trainerAuth) {
             return ResponseEntity.ok().build();
         } else {
-            return ResponseEntity.status(401).build(); 
+            throw new AuthenticationFailedException("Invalid username or password");
         }
     }
 
