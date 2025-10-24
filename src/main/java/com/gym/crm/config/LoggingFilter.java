@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import jakarta.servlet.FilterConfig; // <-- ADD THIS IMPORT
+import jakarta.servlet.FilterConfig; 
 
 import java.io.IOException;
 import java.util.UUID;
@@ -36,29 +36,16 @@ public class LoggingFilter implements Filter {
         }
     }
 
-    /**
-     * Called by the web container to indicate to a filter that it is
-     * being placed into service.
-     * @param filterConfig a {@code FilterConfig} object containing the
-     * filter's configuration and initialization parameters
-     * @throws ServletException if an exception has occurred that interferes with
-     * the filter's normal operation
-     */
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        // Initialization code, if needed (e.g., read filter init-params)
         LOGGER.info("LoggingFilter initialized.");
     }
 
-    /**
-     * Called by the web container to indicate to a filter that it is being
-     * taken out of service.
-     */
+
     @Override
     public void destroy() {
-        // Cleanup code, if needed
         LOGGER.info("LoggingFilter destroyed.");
     }
 
-    // REMOVE THE DUPLICATE init() AND destroy() METHODS THAT WERE HERE
 }

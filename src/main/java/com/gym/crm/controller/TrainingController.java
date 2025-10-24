@@ -31,16 +31,14 @@ public class TrainingController {
     @Operation(summary = "Add a new training (Task 14)")
     public ResponseEntity<Void> addTraining(@Valid @RequestBody AddTrainingRequestDto requestDto) {
         
-        // 1. Get the TrainingType entity from the ID
         TrainingType trainingType = trainingTypeService.findById(requestDto.getTrainingTypeId())
-                .orElseThrow(() -> new RuntimeException("TrainingType not found")); // We will fix this with proper error handling
+                .orElseThrow(() -> new RuntimeException("TrainingType not found")); 
 
-        // 2. Call your existing service method
         Training newTraining = trainingService.addTraining(
                 requestDto.getTraineeUsername(),
                 requestDto.getTrainerUsername(),
                 requestDto.getTrainingName(),
-                trainingType, // Pass the full entity
+                trainingType, 
                 requestDto.getTrainingDate(),
                 requestDto.getTrainingDuration()
         );
@@ -48,7 +46,6 @@ public class TrainingController {
         if (newTraining != null) {
             return ResponseEntity.ok().build();
         } else {
-            // This happens if trainee or trainer wasn't found in your service
             return ResponseEntity.badRequest().build();
         }
     }

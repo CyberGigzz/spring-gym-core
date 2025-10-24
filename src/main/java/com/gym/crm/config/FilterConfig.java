@@ -15,10 +15,10 @@ public class FilterConfig {
         FilterRegistrationBean<LoggingFilter> registrationBean = new FilterRegistrationBean<>();
 
         registrationBean.setFilter(new LoggingFilter());
-        registrationBean.addUrlPatterns("/*"); // Apply to all URLs
+        registrationBean.addUrlPatterns("/*"); 
         registrationBean.setName("loggingFilter");
-        registrationBean.setDispatcherTypes(EnumSet.of(DispatcherType.REQUEST)); // Only filter incoming requests
-        registrationBean.setOrder(1); // Set the order if you have multiple filters
+        registrationBean.setDispatcherTypes(EnumSet.of(DispatcherType.REQUEST)); 
+        registrationBean.setOrder(1); 
 
         return registrationBean;
     }

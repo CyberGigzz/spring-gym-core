@@ -11,5 +11,5 @@ public class TrainerTrainingResponseDto {
     private LocalDate trainingDate;
     private String trainingType;
     private Integer trainingDuration;
-    private String traineeName; // The key difference from the other DTO
+    private String traineeName; 
 }

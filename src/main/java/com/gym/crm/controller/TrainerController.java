@@ -47,12 +47,10 @@ public class TrainerController {
         TrainingType specialization = trainingTypeService.findById(requestDto.getSpecializationId())
                 .orElseThrow(() -> new EntityNotFoundException("TrainingType not found with ID: " + requestDto.getSpecializationId()));
 
-        // --- FIX: Service now returns CredentialsDto directly ---
         CredentialsDto credentials = trainerService.createTrainerProfile(
                 requestDto.getFirstName(),
                 requestDto.getLastName(),
                 specialization);
-        // --- END FIX ---
 
         return ResponseEntity.status(HttpStatus.CREATED).body(credentials);
     }
@@ -70,14 +68,13 @@ public class TrainerController {
     public ResponseEntity<TrainerProfileResponseDto> updateTrainerProfile(
             @PathVariable String username, @Valid @RequestBody UpdateTrainerProfileRequestDto requestDto) {
 
-        // Get existing trainer to preserve specialization (Task 9 - read only)
         Trainer existingTrainer = trainerService.selectTrainerProfileByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainer not found with username: " + username));
 
         Trainer updatedTrainer = trainerService.updateTrainerProfile(username, requestDto.getFirstName(), requestDto.getLastName(),
-                        existingTrainer.getSpecialization(), // Use existing specialization
+                        existingTrainer.getSpecialization(), 
                         requestDto.isActive())
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found during update for username: " + username)); // Should not happen if first find worked
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found during update for username: " + username)); 
 
         return ResponseEntity.ok(trainerMapper.toTrainerProfileResponseDto(updatedTrainer));
     }
@@ -88,25 +85,22 @@ public class TrainerController {
             @PathVariable String username,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-            @RequestParam(required = false) String traineeName) { // Parameter name matches service
+            @RequestParam(required = false) String traineeName) { 
 
-        // Ensure trainer exists first
         trainerService.selectTrainerProfileByUsername(username)
                  .orElseThrow(() -> new EntityNotFoundException("Trainer not found with username: " + username));
 
         List<Object[]> results = trainerService.getTrainerTrainingsList(username, fromDate, toDate, traineeName);
 
-        // --- FIX: Ensure mapping matches the 5 fields from the corrected service query ---
         List<TrainerTrainingResponseDto> response = results.stream()
                 .map(r -> new TrainerTrainingResponseDto(
-                        (String)r[0],      // trainingName
-                        (LocalDate)r[1],   // trainingDate
-                        (String)r[2],      // trainingTypeName
-                        (Integer)r[3],     // trainingDuration
-                        (String)r[4]       // traineeUsername
+                        (String)r[0],     
+                        (LocalDate)r[1],  
+                        (String)r[2],     
+                        (Integer)r[3],    
+                        (String)r[4]      
                 ))
                 .collect(Collectors.toList());
-        // --- END FIX ---
 
         return ResponseEntity.ok(response);
     }

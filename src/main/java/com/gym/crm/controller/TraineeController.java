@@ -7,7 +7,7 @@ import com.gym.crm.dto.trainee.TraineeTrainingResponseDto;
 import com.gym.crm.dto.trainee.TrainerInfoDto;
 import com.gym.crm.dto.trainee.UpdateTraineeProfileRequestDto;
 import com.gym.crm.dto.trainee.UpdateTraineeTrainersRequestDto;
-import com.gym.crm.exception.EntityNotFoundException; // Make sure this is imported
+import com.gym.crm.exception.EntityNotFoundException; 
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
@@ -50,13 +50,11 @@ public class TraineeController {
     @PostMapping("/register")
     @Operation(summary = "Register a new trainee", description = "Creates a new trainee profile and returns their generated username and password.")
     public ResponseEntity<CredentialsDto> registerTrainee(@Valid @RequestBody TraineeRegistrationRequestDto requestDto) {
-        // --- FIX: Service now returns CredentialsDto directly ---
         CredentialsDto credentials = traineeService.createTraineeProfile(
                 requestDto.getFirstName(),
                 requestDto.getLastName(),
                 requestDto.getDateOfBirth(),
                 requestDto.getAddress());
-        // --- END FIX ---
 
         return ResponseEntity.status(HttpStatus.CREATED).body(credentials);
     }
@@ -64,7 +62,6 @@ public class TraineeController {
     @GetMapping("/{username}")
     @Operation(summary = "Get trainee profile by username")
     public ResponseEntity<TraineeProfileResponseDto> getTraineeProfile(@PathVariable String username) {
-        // Use EntityNotFoundException for cleaner handling (optional but good practice)
         Trainee trainee = traineeService.selectTraineeProfileByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + username));
         return ResponseEntity.ok(traineeMapper.toTraineeProfileResponseDto(trainee));
@@ -91,9 +88,8 @@ public class TraineeController {
     }
 
     @GetMapping("/{username}/trainers/unassigned")
-    @Operation(summary = "Get unassigned trainers for a trainee") // Corrected summary
+    @Operation(summary = "Get unassigned trainers for a trainee") 
     public ResponseEntity<List<TrainerInfoDto>> getUnassignedTrainers(@PathVariable String username) {
-        // Ensure trainee exists first
          traineeService.selectTraineeProfileByUsername(username)
                  .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + username));
 
@@ -103,7 +99,6 @@ public class TraineeController {
             dto.setUsername(t.getUsername());
             dto.setFirstName(t.getFirstName());
             dto.setLastName(t.getLastName());
-            // Add null check for specialization, just in case
             if (t.getSpecialization() != null) {
                 dto.setSpecialization(t.getSpecialization().getTrainingTypeName());
             }
@@ -141,23 +136,20 @@ public class TraineeController {
             @RequestParam(required = false) String trainerName,
             @RequestParam(required = false) String trainingType) {
 
-        // Ensure trainee exists first
         traineeService.selectTraineeProfileByUsername(username)
                  .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + username));
 
         List<Object[]> results = traineeService.getTraineeTrainingsList(username, fromDate, toDate, trainerName, trainingType);
 
-        // --- FIX: Ensure mapping matches the 5 fields from the corrected service query ---
         List<TraineeTrainingResponseDto> response = results.stream()
                 .map(r -> new TraineeTrainingResponseDto(
-                        (String)r[0],      // trainingName
-                        (LocalDate)r[1],   // trainingDate
-                        (String)r[2],      // trainingTypeName
-                        (Integer)r[3],     // trainingDuration
-                        (String)r[4]       // trainerUsername
+                        (String)r[0],      
+                        (LocalDate)r[1],   
+                        (String)r[2],      
+                        (Integer)r[3],     
+                        (String)r[4]       
                 ))
                 .collect(Collectors.toList());
-        // --- END FIX ---
         return ResponseEntity.ok(response);
     }
 

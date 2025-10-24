@@ -2,7 +2,6 @@ package com.gym.crm.service;
 
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
-import com.gym.crm.dto.auth.CredentialsDto; // Import the DTO
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -37,10 +36,6 @@ public class UserService {
         return traineeDAO.findByUsername(username).isPresent() || trainerDAO.findByUsername(username).isPresent();
     }
 
-    /**
-     * Generates a random plain text password.
-     * @return The plain text password.
-     */
     public String generatePlainPassword() {
         final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         SecureRandom random = new SecureRandom();
@@ -51,11 +46,6 @@ public class UserService {
         return password.toString();
     }
 
-    /**
-     * Encodes a plain text password using the configured encoder.
-     * @param plainPassword The plain text password.
-     * @return The encoded password hash.
-     */
     public String encodePassword(String plainPassword) {
         return passwordEncoder.encode(plainPassword);
     }

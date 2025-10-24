@@ -78,7 +78,6 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<Map<String, String>> handleDatabaseConflict(DataIntegrityViolationException ex) {
         Map<String, String> error = new HashMap<>();
-        // Get the most specific cause
         String message = ex.getMostSpecificCause().getMessage();
         error.put("error", "Database conflict: " + message);
         
