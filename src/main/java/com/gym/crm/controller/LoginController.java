@@ -5,12 +5,16 @@ import com.gym.crm.dto.auth.UpdatePasswordRequestDto;
 import com.gym.crm.exception.AuthenticationFailedException;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication Controller", description = "Endpoints for user login and password changes (Tasks 3 & 4)")
 public class LoginController {
 
     private final TraineeService traineeService;
@@ -22,6 +26,7 @@ public class LoginController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "User login (Task 3)", description = "Authenticates a Trainee or Trainer based on username and password.")
     public ResponseEntity<Void> login(@Valid @RequestBody LoginRequestDto loginRequest) {
         boolean traineeAuth = traineeService.checkTraineeCredentials(loginRequest.getUsername(), loginRequest.getPassword());
         boolean trainerAuth = trainerService.checkTrainerCredentials(loginRequest.getUsername(), loginRequest.getPassword());
@@ -34,6 +39,7 @@ public class LoginController {
     }
 
     @PutMapping("/change-password/{username}")
+    @Operation(summary = "Change user password (Task 4)", description = "Changes the password for a Trainee or Trainer after validating the old password.")
     public ResponseEntity<Void> changePassword(@PathVariable String username, @Valid @RequestBody UpdatePasswordRequestDto requestDto) {
         boolean traineePassChanged = traineeService.changeTraineePassword(username, requestDto.getOldPassword(), requestDto.getNewPassword());
         
