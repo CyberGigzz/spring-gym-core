@@ -57,21 +57,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) 
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers(
-                                 "/",  
-                                 "/api/auth/**", 
+                                 "/",
+                                 "/api/auth/**",
                                  "/api/trainees/register",
                                  "/api/trainers/register",
                                  "/swagger-ui.html",
                                  "/swagger-ui/**",
                                  "/v3/api-docs/**",
-                                 "/h2-console/**").permitAll()
-                
+                                 "/h2-console/**",
+                                 "/actuator/**" 
+                ).permitAll()
                 .anyRequest().authenticated()
             )
-            .httpBasic(withDefaults()); 
+            .httpBasic(withDefaults());
 
         http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
 
