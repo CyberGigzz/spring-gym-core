@@ -59,13 +59,16 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) 
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/auth/login",
+                .requestMatchers(
+                                 "/",  
+                                 "/api/auth/**", 
                                  "/api/trainees/register",
                                  "/api/trainers/register",
                                  "/swagger-ui.html",
                                  "/swagger-ui/**",
                                  "/v3/api-docs/**",
                                  "/h2-console/**").permitAll()
+                
                 .anyRequest().authenticated()
             )
             .httpBasic(withDefaults()); 

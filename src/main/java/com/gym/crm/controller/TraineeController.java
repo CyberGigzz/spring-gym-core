@@ -12,6 +12,8 @@ import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.service.TraineeService;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/trainees")
+@Tag(name = "Trainee Controller", description = "Endpoints for managing trainee profiles and activities")
 public class TraineeController {
 
     private final TraineeService traineeService;
