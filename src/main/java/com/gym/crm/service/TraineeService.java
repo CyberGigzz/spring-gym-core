@@ -5,6 +5,9 @@ import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dto.auth.CredentialsDto; 
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -29,14 +32,22 @@ public class TraineeService {
     private final TrainerDAO trainerDAO;
     private final PasswordEncoder passwordEncoder;
 
+    private final Counter traineeRegistrationsCounter;
+
     @PersistenceContext
     private EntityManager entityManager;
 
-    public TraineeService(UserService userService, TraineeDAO traineeDAO, TrainerDAO trainerDAO, PasswordEncoder passwordEncoder) { 
+    public TraineeService(UserService userService, TraineeDAO traineeDAO, TrainerDAO trainerDAO,
+                          PasswordEncoder passwordEncoder, MeterRegistry meterRegistry) { 
         this.userService = userService;
         this.traineeDAO = traineeDAO;
         this.trainerDAO = trainerDAO;
-        this.passwordEncoder = passwordEncoder; 
+        this.passwordEncoder = passwordEncoder;
+
+        this.traineeRegistrationsCounter = Counter.builder("crm.trainee.registrations.total")
+                .description("Total number of new trainee registrations")
+                .tag("entity", "trainee") 
+                .register(meterRegistry);
     }
 
     @Transactional(readOnly = true) 
@@ -62,6 +73,8 @@ public class TraineeService {
 
         traineeDAO.save(trainee);
         LOGGER.info("Successfully created trainee with username: {}", username);
+
+        this.traineeRegistrationsCounter.increment();
 
         CredentialsDto credentials = new CredentialsDto();
         credentials.setUsername(username);
