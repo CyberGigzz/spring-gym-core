@@ -5,8 +5,6 @@ import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.service.TrainingService;
 import com.gym.crm.service.TrainingTypeService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/trainings")
-@Tag(name = "Training Controller", description = "Endpoints for managing trainings")
 public class TrainingController {
 
     private final TrainingService trainingService;
@@ -28,7 +25,6 @@ public class TrainingController {
     }
 
     @PostMapping
-    @Operation(summary = "Add a new training (Task 14)")
     public ResponseEntity<Void> addTraining(@Valid @RequestBody AddTrainingRequestDto requestDto) {
         
         TrainingType trainingType = trainingTypeService.findById(requestDto.getTrainingTypeId())

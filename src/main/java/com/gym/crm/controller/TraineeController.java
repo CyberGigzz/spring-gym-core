@@ -12,8 +12,6 @@ import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.service.TraineeService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -26,7 +24,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/trainees")
-@Tag(name = "Trainee Controller", description = "Endpoints for managing trainee profiles and activities")
 public class TraineeController {
 
     private final TraineeService traineeService;
@@ -38,7 +35,6 @@ public class TraineeController {
     }
 
     @GetMapping
-    @Operation(summary = "Get a list of all trainees")
     public ResponseEntity<List<TraineeProfileResponseDto>> getAllTrainees() {
         List<Trainee> trainees = traineeService.findAllTrainees();
         List<TraineeProfileResponseDto> responseDtos = trainees.stream()
@@ -48,7 +44,6 @@ public class TraineeController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Register a new trainee", description = "Creates a new trainee profile and returns their generated username and password.")
     public ResponseEntity<CredentialsDto> registerTrainee(@Valid @RequestBody TraineeRegistrationRequestDto requestDto) {
         CredentialsDto credentials = traineeService.createTraineeProfile(
                 requestDto.getFirstName(),
@@ -60,7 +55,6 @@ public class TraineeController {
     }
 
     @GetMapping("/{username}")
-    @Operation(summary = "Get trainee profile by username")
     public ResponseEntity<TraineeProfileResponseDto> getTraineeProfile(@PathVariable String username) {
         Trainee trainee = traineeService.selectTraineeProfileByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + username));
@@ -68,7 +62,6 @@ public class TraineeController {
     }
 
     @PutMapping("/{username}")
-    @Operation(summary = "Update trainee profile")
     public ResponseEntity<TraineeProfileResponseDto> updateTraineeProfile(@PathVariable String username, @Valid @RequestBody UpdateTraineeProfileRequestDto requestDto) {
         Trainee updatedTrainee = traineeService.updateTraineeProfile(username, requestDto.getFirstName(), requestDto.getLastName(),
                         requestDto.getDateOfBirth(), requestDto.getAddress(), requestDto.isActive())
@@ -77,7 +70,6 @@ public class TraineeController {
     }
 
     @DeleteMapping("/{username}")
-    @Operation(summary = "Delete trainee profile")
     public ResponseEntity<Void> deleteTraineeProfile(@PathVariable String username) {
         boolean deleted = traineeService.deleteTraineeProfileByUsername(username);
         if (!deleted) {
@@ -88,7 +80,6 @@ public class TraineeController {
     }
 
     @GetMapping("/{username}/trainers/unassigned")
-    @Operation(summary = "Get unassigned trainers for a trainee") 
     public ResponseEntity<List<TrainerInfoDto>> getUnassignedTrainers(@PathVariable String username) {
          traineeService.selectTraineeProfileByUsername(username)
                  .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + username));
@@ -108,7 +99,6 @@ public class TraineeController {
     }
 
     @PutMapping("/{username}/trainers")
-    @Operation(summary = "Update Trainee's Trainer List")
     public ResponseEntity<List<TrainerInfoDto>> updateTraineeTrainers(
             @PathVariable String username, @Valid @RequestBody UpdateTraineeTrainersRequestDto requestDto) {
         List<Trainer> updatedTrainers = traineeService.updateTraineeTrainersList(username, requestDto.getTrainerUsernames())
@@ -128,7 +118,6 @@ public class TraineeController {
     }
 
     @GetMapping("/{username}/trainings")
-    @Operation(summary = "Get Trainee Trainings List")
     public ResponseEntity<List<TraineeTrainingResponseDto>> getTraineeTrainings(
             @PathVariable String username,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
@@ -154,7 +143,6 @@ public class TraineeController {
     }
 
     @PatchMapping("/{username}/status")
-    @Operation(summary = "Activate or deactivate a trainee")
     public ResponseEntity<Void> activateDeactivateTrainee(
             @PathVariable String username, @RequestParam boolean isActive) {
         boolean updated = traineeService.activateDeactivateTrainee(username, isActive);

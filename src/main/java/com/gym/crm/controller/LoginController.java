@@ -5,15 +5,12 @@ import com.gym.crm.dto.auth.UpdatePasswordRequestDto;
 import com.gym.crm.exception.AuthenticationFailedException;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Login Controller", description = "Endpoints for managing Authentication")
 public class LoginController {
 
     private final TraineeService traineeService;
@@ -25,7 +22,6 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "User login for Trainee or Trainer")
     public ResponseEntity<Void> login(@Valid @RequestBody LoginRequestDto loginRequest) {
         boolean traineeAuth = traineeService.checkTraineeCredentials(loginRequest.getUsername(), loginRequest.getPassword());
         boolean trainerAuth = trainerService.checkTrainerCredentials(loginRequest.getUsername(), loginRequest.getPassword());
@@ -38,7 +34,6 @@ public class LoginController {
     }
 
     @PutMapping("/change-password/{username}")
-    @Operation(summary = "Change user password for Trainee or Trainer")
     public ResponseEntity<Void> changePassword(@PathVariable String username, @Valid @RequestBody UpdatePasswordRequestDto requestDto) {
         boolean traineePassChanged = traineeService.changeTraineePassword(username, requestDto.getOldPassword(), requestDto.getNewPassword());
         

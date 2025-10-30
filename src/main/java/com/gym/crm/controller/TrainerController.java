@@ -11,8 +11,6 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingTypeService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -25,7 +23,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/trainers")
-@Tag(name = "Trainer Controller", description = "Endpoints for managing trainer profiles and activities")
 public class TrainerController {
 
     private final TrainerService trainerService;
@@ -41,7 +38,6 @@ public class TrainerController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Register a new trainer (Task 2)")
     public ResponseEntity<CredentialsDto> registerTrainer(@Valid @RequestBody TrainerRegistrationRequestDto requestDto) {
 
         TrainingType specialization = trainingTypeService.findById(requestDto.getSpecializationId())
@@ -56,7 +52,6 @@ public class TrainerController {
     }
 
     @GetMapping("/{username}")
-    @Operation(summary = "Get trainer profile by username (Task 8)")
     public ResponseEntity<TrainerProfileResponseDto> getTrainerProfile(@PathVariable String username) {
         Trainer trainer = trainerService.selectTrainerProfileByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainer not found with username: " + username));
@@ -64,7 +59,6 @@ public class TrainerController {
     }
 
     @PutMapping("/{username}")
-    @Operation(summary = "Update trainer profile (Task 9)")
     public ResponseEntity<TrainerProfileResponseDto> updateTrainerProfile(
             @PathVariable String username, @Valid @RequestBody UpdateTrainerProfileRequestDto requestDto) {
 
@@ -80,7 +74,6 @@ public class TrainerController {
     }
 
     @GetMapping("/{username}/trainings")
-    @Operation(summary = "Get Trainer Trainings List (Task 13)")
     public ResponseEntity<List<TrainerTrainingResponseDto>> getTrainerTrainings(
             @PathVariable String username,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
@@ -106,7 +99,6 @@ public class TrainerController {
     }
 
     @PatchMapping("/{username}/status")
-    @Operation(summary = "Activate or deactivate a trainer (Task 16)")
     public ResponseEntity<Void> activateDeactivateTrainer(
             @PathVariable String username, @RequestParam boolean isActive) {
         boolean updated = trainerService.activateDeactivateTrainer(username, isActive);
