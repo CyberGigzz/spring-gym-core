@@ -2,6 +2,8 @@ package com.gym.crm.config;
 
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
+import com.gym.crm.security.JwtRequestFilter;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; 
 import org.springframework.security.crypto.password.PasswordEncoder;   
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 @Configuration
@@ -25,10 +28,12 @@ public class SecurityConfig {
 
     private final TraineeDAO traineeDAO;
     private final TrainerDAO trainerDAO;
+    private final JwtRequestFilter jwtRequestFilter;
 
-    public SecurityConfig(TraineeDAO traineeDAO, TrainerDAO trainerDAO) {
+    public SecurityConfig(TraineeDAO traineeDAO, TrainerDAO trainerDAO, JwtRequestFilter jwtRequestFilter) {
         this.traineeDAO = traineeDAO;
         this.trainerDAO = trainerDAO;
+        this.jwtRequestFilter = jwtRequestFilter;
     }
 
     @Bean
@@ -89,6 +94,7 @@ public class SecurityConfig {
             .httpBasic(AbstractHttpConfigurer::disable);
 
         http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
+        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
