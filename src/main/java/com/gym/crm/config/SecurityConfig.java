@@ -4,6 +4,7 @@ import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.security.JwtRequestFilter;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,11 +29,15 @@ public class SecurityConfig {
 
     private final TraineeDAO traineeDAO;
     private final TrainerDAO trainerDAO;
-    private final JwtRequestFilter jwtRequestFilter;
+    private JwtRequestFilter jwtRequestFilter;
 
-    public SecurityConfig(TraineeDAO traineeDAO, TrainerDAO trainerDAO, JwtRequestFilter jwtRequestFilter) {
+    public SecurityConfig(TraineeDAO traineeDAO, TrainerDAO trainerDAO) {
         this.traineeDAO = traineeDAO;
         this.trainerDAO = trainerDAO;
+    }
+
+    @Autowired
+    public void setJwtRequestFilter(JwtRequestFilter jwtRequestFilter) {
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
