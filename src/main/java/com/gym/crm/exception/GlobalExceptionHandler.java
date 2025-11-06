@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.HashMap;
+import com.gym.crm.dto.error.ErrorResponseDto;
+
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -35,10 +36,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<Map<String, String>> handleEntityNotFound(EntityNotFoundException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", ex.getMessage());
-        
+    public ResponseEntity<ErrorResponseDto> handleEntityNotFound(EntityNotFoundException ex) {
+        ErrorResponseDto error = new ErrorResponseDto(ex.getMessage());
         LOGGER.warn("Entity not found: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
@@ -46,41 +45,33 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "An unexpected internal server error occurred.");
-        
+    public ResponseEntity<ErrorResponseDto> handleGenericException(Exception ex) {
+        ErrorResponseDto error = new ErrorResponseDto("An unexpected internal server error occurred.");
         LOGGER.error("An unexpected error occurred: ", ex); 
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(AuthenticationFailedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<Map<String, String>> handleAuthenticationFailed(AuthenticationFailedException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", ex.getMessage());
-        
+    public ResponseEntity<ErrorResponseDto> handleAuthenticationFailed(AuthenticationFailedException ex) {
+        ErrorResponseDto error = new ErrorResponseDto(ex.getMessage());
         LOGGER.warn("Authentication failed: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(DataConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ResponseEntity<Map<String, String>> handleDataConflict(DataConflictException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", ex.getMessage());
-        
+    public ResponseEntity<ErrorResponseDto> handleDataConflict(DataConflictException ex) {
+        ErrorResponseDto error = new ErrorResponseDto(ex.getMessage());
         LOGGER.warn("Data conflict: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ResponseEntity<Map<String, String>> handleDatabaseConflict(DataIntegrityViolationException ex) {
-        Map<String, String> error = new HashMap<>();
-        String message = ex.getMostSpecificCause().getMessage();
-        error.put("error", "Database conflict: " + message);
-        
+    public ResponseEntity<ErrorResponseDto> handleDatabaseConflict(DataIntegrityViolationException ex) {
+        String message = "Database conflict: " + ex.getMostSpecificCause().getMessage();
+        ErrorResponseDto error = new ErrorResponseDto(message);
         LOGGER.warn("Data integrity violation: {}", message);
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
