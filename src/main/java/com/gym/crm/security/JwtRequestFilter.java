@@ -1,8 +1,5 @@
 package com.gym.crm.security;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +16,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.gym.crm.service.TokenBlacklistService;
+
 import java.io.IOException;
 
 @Component
@@ -30,6 +29,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     private final UserDetailsService userDetailsService;
+
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
 
     public JwtRequestFilter(@Lazy UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
@@ -46,14 +48,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             jwtToken = requestTokenHeader.substring(7);
-            try {
-                username = jwtUtil.extractUsername(jwtToken);
-            } catch (IllegalArgumentException e) {
-                LOGGER.warn("Unable to get JWT Token");
-            } catch (ExpiredJwtException e) {
-                LOGGER.warn("JWT Token has expired");
-            } catch (SignatureException | MalformedJwtException e) {
-                LOGGER.warn("Invalid JWT Token signature");
+            
+            if (tokenBlacklistService.isTokenBlacklisted(jwtToken)) {
+                LOGGER.warn("Attempted to use a blacklisted (logged out) JWT token");
+            } else {
+                try {
+                    username = jwtUtil.extractUsername(jwtToken);
+                } catch (Exception e) {
+                    LOGGER.warn("JWT token validation failed: {}", e.getMessage());
+                }
             }
         } else if (requestTokenHeader != null) {
             LOGGER.warn("JWT Token does not begin with Bearer String");

@@ -19,7 +19,7 @@ import javax.crypto.SecretKey;
 public class JwtUtil {
 
     // Token validity period (10 hours)
-    public static final long JWT_TOKEN_VALIDITY = 10 * 60 * 60 * 1000; 
+    public static final long JWT_TOKEN_VALIDITY = 10 * 60 * 60 * 1000;
 
     @Value("${jwt.secret-key}")
     private String secret;
