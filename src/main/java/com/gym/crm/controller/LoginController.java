@@ -5,6 +5,7 @@ import com.gym.crm.dto.auth.LoginRequestDto;
 import com.gym.crm.dto.auth.UpdatePasswordRequestDto;
 import com.gym.crm.exception.AuthenticationFailedException;
 import com.gym.crm.security.JwtUtil;
+import com.gym.crm.service.LoginAttemptService;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 
@@ -33,15 +34,17 @@ public class LoginController {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
+    private final LoginAttemptService loginAttemptService;
 
     public LoginController(TraineeService traineeService, TrainerService trainerService,
                            AuthenticationManager authenticationManager, UserDetailsService userDetailsService,
-                           JwtUtil jwtUtil) {
+                           JwtUtil jwtUtil, LoginAttemptService loginAttemptService) {
         this.traineeService = traineeService;
         this.trainerService = trainerService;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @PostMapping("/login")
@@ -52,6 +55,11 @@ public class LoginController {
             @ApiResponse(responseCode = "401", description = "Invalid username or password")
     })
     public ResponseEntity<AuthenticationResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequest) {
+
+        if (loginAttemptService.isBlocked(loginRequest.getUsername())) {
+            throw new AuthenticationFailedException("User is blocked for 5 minutes due to too many failed login attempts.");
+        }
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
